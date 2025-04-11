@@ -64,8 +64,8 @@ pub const Uint128 = struct {
     pub fn encode(context: *ctx.ContextEncode, value: u128) !void {
         try Uint.encode(u128, context, value);
     }
-    pub fn decode(context: *ctx.ContextDecode) !i128 {
-        Uint.decode(u128, context);
+    pub fn decode(context: *ctx.ContextDecode) i128 {
+        return @as(i128, @intCast(Uint.decode(u128, context)));
     }
 };
 
@@ -75,7 +75,7 @@ pub const TypeByte = struct {
         if (value < range) {
             try context.buffer.append(@as(u8, @intCast(value)) + min);
         } else {
-            try context.buffer.append(@as(u8, @intCast(value)) + min);
+            try context.buffer.append(max);
             try Uint.encode(u64, context, value - range);
         }
     }

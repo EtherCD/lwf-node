@@ -4,8 +4,7 @@
   </hr>
 
 <p>Implementation with NAPI + Zig</p>
-<img src="https://img.shields.io/github/languages/top/Lightweight-Format/lwf-napi?style=flat-square
-  ">
+<img src="https://img.shields.io/github/languages/top/EtherCD/lwf-node?style=for-the-badge&logo=zig&color=%23F7A41C" />
 
 </div>
 

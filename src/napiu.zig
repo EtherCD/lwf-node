@@ -16,7 +16,7 @@ pub const napi_function = 7;
 pub const napi_external = 8;
 pub const napi_bigint = 9;
 
-pub const NapiErrors = error{ BufferCast, InvalidArgv, InvalidValue, CreateValue, TooLarge };
+pub const NapiErrors = error{ BufferCast, InvalidArgv, InvalidValue, CreateValue, CheckValue, TooLarge };
 
 pub fn write_from_buffer(buffer: []u8, array: *std.ArrayList(u8)) !void {
     for (buffer) |el| try array.append(el);
@@ -103,6 +103,17 @@ pub fn get_buffer(env: c.napi_env, value: c.napi_value) ![]u8 {
     return data[0..length];
 }
 
+pub fn get_array_length(env: c.napi_env, value: c.napi_value) !u32 {
+    var result: u32 = undefined;
+
+    if (c.napi_get_array_length(env, value, &result) != 0) {
+        _ = c.napi_throw_error(env, null, "Cannot get array length");
+        return NapiErrors.InvalidValue;
+    }
+
+    return result;
+}
+
 pub fn get_double(env: c.napi_env, value: c.napi_value) !f64 {
     var result: f64 = undefined;
 
@@ -162,13 +173,46 @@ pub fn create_int64(env: c.napi_env, value: i64) !c.napi_value {
     return result;
 }
 
+pub fn create_int128(env: c.napi_env, value: i128) !c.napi_value {
+    const sign_bit: c_int = value < 0;
+    const abs_val: u128 = if (sign_bit) @as(u128, @bitCast(-value)) else @as(u128, @bitCast(value));
+
+    const low = @as(u64, abs_val & 0xFFFFFFFFFFFFFFFF);
+    const high = @as(u64, abs_val >> 64);
+
+    const word_count = if (high != 0) 2 else 1;
+
+    var words: [2]u64 = .{ low, high };
+
+    var result: c.napi_value = undefined;
+
+    if (c.napi_create_bigint_words(env, sign_bit, word_count, &words, &result) != c.napi_ok)
+        return error.BigIntCreateFailed;
+
+    return result;
+}
+
 pub fn type_of(env: c.napi_env, value: c.napi_value) !c.napi_valuetype {
     var valuetype: c.napi_valuetype = undefined;
 
     if (c.napi_typeof(env, value, &valuetype) != 0) {
         _ = c.napi_throw_error(env, null, "Unable to check type");
-        return NapiErrors.CreateValue;
+        return NapiErrors.CheckValue;
     }
 
     return valuetype;
+}
+
+pub fn is_object(value: c.napi_valuetype) !bool {
+    return value == napi_object;
+}
+
+pub fn is_array(env: c.napi_env, value: c.napi_value) !bool {
+    var result: bool = undefined;
+    if (c.napi_is_array(env, value, &result) != 0) {
+        _ = c.napi_throw_error(env, null, "Unable to check type");
+        return NapiErrors.CheckValue;
+    }
+
+    return result;
 }
