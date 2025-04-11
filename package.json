@@ -1,0 +1,12 @@
+{
+	"name": "lwf-node",
+	"version": "1.0.0",
+	"description": "Node implementation for LightWeight Format ",
+	"main": "index.js",
+	"scripts": {
+		"build": "mkdir -p dist && ZIG_SYSTEM_LINKER_HACK=1 zig build-lib -mcpu=baseline -OReleaseSmall -dynamic -lc -isystem deps/node-$(node --version)/include/node src/lib.zig -fallow-shlib-undefined -femit-bin=dist/lib.node",
+		"test": "node test.js"
+	},
+	"author": "EtherCD",
+	"license": "BSD-3-Clause"
+}
